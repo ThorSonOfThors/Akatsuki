@@ -1,0 +1,48 @@
+/* RESET */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ROOT — ⚠️ DO NOT LOCK HEIGHT */
+html, body {
+  width: 100%;
+  
+}
+
+/* BODY */
+body {
+  font-family: 'Inter', sans-serif;
+  background: #18550a;
+}
+
+/* APP ROOT */
+#app {
+  width: 100%;
+}
+
+/* FULL WIDTH SECTIONS */
+section {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* MEDIA FIX (⚠️ EXCLUDE CANVAS) */
+img, video {
+  display: block;
+  max-width: 100%;
+}
+
+/* IMPORTANT: let canvas behave freely */
+canvas {
+  display: block;
+}
+
+/* OPTIONAL STRUCTURE */
+.home,
+.page {
+  width: 100%;
+}
