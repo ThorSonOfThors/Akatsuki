@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { supabase } from '../lib/supabase'
 import { useAuthStore } from '../stores/auth'
-import MapPicker from '../components/mapPicker.vue'
+import MapPicker from '../components/MapPicker.vue'
 
 const auth = useAuthStore()
 
