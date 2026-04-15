@@ -10,7 +10,7 @@ import EventManager from '../views/EventManager.vue'
 import LoginAdmin from '../views/LoginAdmin.vue'
 
 const routes = [
-  { path: '/', redirect: '/zabava' },
+  { path: '/', redirect: '/home' },
   { path: '/zabava', component: Zabava },
   { path: '/kontakt', component: Kontakt },
   { path: '/o-nama', component: ONama },
