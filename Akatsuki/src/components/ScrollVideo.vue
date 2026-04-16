@@ -14,11 +14,17 @@ const loadedMap = new Array(frameCount).fill(false)
 let currentFrame = 0
 let targetFrame = 0
 let lastRenderedFrame = -1
+let isMobile = false
 
 const getFramePath = (i) =>
   `/frames/frame${String(i).padStart(4, '0')}.jpg`
 
-// ✅ PARALLEL PRELOAD (FAST + RELIABLE)
+// ✅ Check if mobile device
+const checkMobile = () => {
+  return window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+}
+
+// ✅ PARALLEL PRELOAD
 const preloadImages = (callback) => {
   let loaded = 0
 
@@ -30,7 +36,6 @@ const preloadImages = (callback) => {
       loadedMap[i] = true
       loaded++
 
-      // start early (don’t wait for all)
       if (loaded === 1) {
         callback()
       }
@@ -47,14 +52,41 @@ const preloadImages = (callback) => {
 // ✅ SMOOTH INTERPOLATION
 const lerp = (a, b, t) => a + (b - a) * t
 
-// ✅ SAFE RENDER (fallback if frame missing)
+// ✅ Calculate dimensions based on device
+const calculateDimensions = (canvas, img) => {
+  const containerWidth = window.innerWidth
+  const containerHeight = window.innerHeight
+  const imgAspect = img.width / img.height
+  const containerAspect = containerWidth / containerHeight
+
+  let drawWidth, drawHeight, offsetX, offsetY
+
+  if (isMobile) {
+    // MOBILE: Crop sides to fill screen (maintain center)
+    drawHeight = containerHeight
+    drawWidth = containerHeight * imgAspect
+    offsetX = (containerWidth - drawWidth) / 2
+    offsetY = 0
+  } else {
+    // DESKTOP: ORIGINAL BEHAVIOR - stretch to fill exactly (no letterboxing)
+    drawWidth = containerWidth
+    drawHeight = containerHeight
+    offsetX = 0
+    offsetY = 0
+  }
+
+  return { drawWidth, drawHeight, offsetX, offsetY }
+}
+
+// ✅ RENDER function
 const render = (index) => {
   const canvas = canvasRef.value
+  if (!canvas) return
+  
   const ctx = canvas.getContext('2d')
 
   let safeIndex = index
 
-  // 🔥 fallback to nearest loaded frame
   if (!loadedMap[safeIndex]) {
     for (let i = safeIndex; i >= 0; i--) {
       if (loadedMap[i]) {
@@ -70,7 +102,9 @@ const render = (index) => {
   if (!img) return
 
   ctx.clearRect(0, 0, canvas.width, canvas.height)
-  ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+  
+  const { drawWidth, drawHeight, offsetX, offsetY } = calculateDimensions(canvas, img)
+  ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight)
 
   lastRenderedFrame = safeIndex
 }
@@ -82,14 +116,35 @@ const animate = () => {
   requestAnimationFrame(animate)
 }
 
+// ✅ RESIZE HANDLER with debounce
+let resizeTimeout
+const handleResize = () => {
+  clearTimeout(resizeTimeout)
+  resizeTimeout = setTimeout(() => {
+    const canvas = canvasRef.value
+    if (canvas) {
+      canvas.width = window.innerWidth
+      canvas.height = window.innerHeight
+      isMobile = checkMobile()
+      
+      if (lastRenderedFrame !== -1) {
+        render(lastRenderedFrame)
+      }
+    }
+  }, 100)
+}
+
 onMounted(() => {
   const canvas = canvasRef.value
   canvas.width = window.innerWidth
   canvas.height = window.innerHeight
+  isMobile = checkMobile()
 
   preloadImages(() => {
     render(0)
     animate()
+
+    window.addEventListener('resize', handleResize)
 
     // 🎯 SCROLL → FRAME
     gsap.to({}, {
@@ -180,13 +235,8 @@ onMounted(() => {
     <!-- OVERLAY WITH TEXT -->
     <div class="overlay">
       <h1 class="headline">
-        <span v-for="(l, i) in 'MAKE A CHANGE'.split('')" 
-              :key="i"
-              class="letter">
-          {{ l === ' ' ? '\u00A0' : l }}
-        </span>
+        <!-- Your headline text here -->
       </h1>
-      
 
       <div class="scroll-indicator">
         <span>Scroll to explore</span>
@@ -217,6 +267,7 @@ canvas {
   width: 100%;
   height: 100vh;
   display: block;
+  object-fit: cover; /* Fallback for CSS */
 }
 
 /* OVERLAY */
@@ -318,6 +369,28 @@ canvas {
   background: repeating-radial-gradient(circle at 20% 30%, rgba(0,0,0,0.05), rgba(0,0,0,0.05) 2px, transparent 2px, transparent 4px);
   pointer-events: none;
   z-index: 3;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .headline {
+    gap: 0.03em;
+    letter-spacing: 0.05em;
+  }
+  
+  .subtitle {
+    letter-spacing: 0.2em;
+    margin-bottom: 2rem;
+  }
+  
+  .scroll-indicator {
+    bottom: 30px;
+  }
+  
+  /* Improve performance on mobile */
+  .noise-overlay {
+    display: none; /* Optional: disable noise on mobile for better performance */
+  }
 }
 
 /* Custom scrollbar */

@@ -84,12 +84,25 @@ onMounted(() => {
 }
 
 .headline {
-  font-size: 5rem;
+  font-size: 4rem;
   font-weight: 800;
   letter-spacing: 6px;
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
+}
+
+
+@media (max-width: 768px) {
+  .headline {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: 6px;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
 }
 
 .letter {
