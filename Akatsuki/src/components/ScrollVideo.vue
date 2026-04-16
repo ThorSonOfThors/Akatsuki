@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, onBeforeUnmount, ref, nextTick } from 'vue'
 import gsap from "gsap"
 import ScrollTrigger from "gsap/ScrollTrigger"
 
@@ -15,16 +15,34 @@ let currentFrame = 0
 let targetFrame = 0
 let lastRenderedFrame = -1
 let isMobile = false
+let ctx = null
+let rafId = null
 
+// ✅ Frame path
 const getFramePath = (i) =>
   `/frames/frame${String(i).padStart(4, '0')}.jpg`
 
-// ✅ Check if mobile device
+// ✅ Mobile check
 const checkMobile = () => {
-  return window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+  return window.innerWidth <= 768 ||
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 }
 
-// ✅ PARALLEL PRELOAD
+// ✅ Viewport-safe sizing
+const getViewportHeight = () =>
+  window.visualViewport ? window.visualViewport.height : window.innerHeight
+
+const setCanvasSize = () => {
+  const canvas = canvasRef.value
+  if (!canvas) return
+
+  const rect = canvas.getBoundingClientRect()
+
+  canvas.width = Math.round(rect.width)
+  canvas.height = Math.round(rect.height)
+}
+
+// ✅ Preload
 const preloadImages = (callback) => {
   let loaded = 0
 
@@ -36,39 +54,32 @@ const preloadImages = (callback) => {
       loadedMap[i] = true
       loaded++
 
-      if (loaded === 1) {
-        callback()
-      }
-    }
-
-    img.onerror = () => {
-      console.warn("Failed frame:", i)
+      if (loaded === 1) callback()
     }
 
     images[i] = img
   }
 }
 
-// ✅ SMOOTH INTERPOLATION
+// ✅ LERP
 const lerp = (a, b, t) => a + (b - a) * t
 
-// ✅ Calculate dimensions based on device
-const calculateDimensions = (canvas, img) => {
+// ✅ Dimensions (PIXEL SAFE)
+const calculateDimensions = (img) => {
   const containerWidth = window.innerWidth
-  const containerHeight = window.innerHeight
+  const containerHeight = getViewportHeight()
   const imgAspect = img.width / img.height
-  const containerAspect = containerWidth / containerHeight
 
   let drawWidth, drawHeight, offsetX, offsetY
 
   if (isMobile) {
-    // MOBILE: Crop sides to fill screen (maintain center)
     drawHeight = containerHeight
     drawWidth = containerHeight * imgAspect
-    offsetX = (containerWidth - drawWidth) / 2
+
+    // 🔥 FIX: remove subpixel drift
+    offsetX = Math.round((containerWidth - drawWidth) / 2)
     offsetY = 0
   } else {
-    // DESKTOP: ORIGINAL BEHAVIOR - stretch to fill exactly (no letterboxing)
     drawWidth = containerWidth
     drawHeight = containerHeight
     offsetX = 0
@@ -78,12 +89,10 @@ const calculateDimensions = (canvas, img) => {
   return { drawWidth, drawHeight, offsetX, offsetY }
 }
 
-// ✅ RENDER function
+// ✅ Render
 const render = (index) => {
   const canvas = canvasRef.value
-  if (!canvas) return
-  
-  const ctx = canvas.getContext('2d')
+  if (!canvas || !ctx) return
 
   let safeIndex = index
 
@@ -102,49 +111,84 @@ const render = (index) => {
   if (!img) return
 
   ctx.clearRect(0, 0, canvas.width, canvas.height)
-  
-  const { drawWidth, drawHeight, offsetX, offsetY } = calculateDimensions(canvas, img)
+
+  const { drawWidth, drawHeight, offsetX, offsetY } = calculateDimensions(img)
+
   ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight)
 
   lastRenderedFrame = safeIndex
 }
 
-// ✅ ANIMATION LOOP
+// ✅ Animation loop
 const animate = () => {
   currentFrame = lerp(currentFrame, targetFrame, 0.1)
   render(Math.floor(currentFrame))
-  requestAnimationFrame(animate)
+  rafId = requestAnimationFrame(animate)
 }
 
-// ✅ RESIZE HANDLER with debounce
+// ✅ Resize
 let resizeTimeout
 const handleResize = () => {
   clearTimeout(resizeTimeout)
+
   resizeTimeout = setTimeout(() => {
-    const canvas = canvasRef.value
-    if (canvas) {
-      canvas.width = window.innerWidth
-      canvas.height = window.innerHeight
-      isMobile = checkMobile()
-      
-      if (lastRenderedFrame !== -1) {
-        render(lastRenderedFrame)
-      }
-    }
-  }, 100)
+    setCanvasSize()
+    isMobile = checkMobile()
+    render(Math.floor(currentFrame))
+    ScrollTrigger.refresh()
+  }, 50)
 }
 
-onMounted(() => {
+// ✅ CLEANUP (VERY IMPORTANT)
+onBeforeUnmount(() => {
+  ScrollTrigger.getAll().forEach(t => t.kill())
+  window.removeEventListener('resize', handleResize)
+
+  if (window.visualViewport) {
+    window.visualViewport.removeEventListener('resize', handleResize)
+  }
+
+  cancelAnimationFrame(rafId)
+})
+
+// ✅ INIT
+onMounted(async () => {
+  // 🔥 HARD RESET STATE
+  currentFrame = 0
+  targetFrame = 0
+  lastRenderedFrame = -1
+
+  ScrollTrigger.getAll().forEach(t => t.kill())
+
   const canvas = canvasRef.value
-  canvas.width = window.innerWidth
-  canvas.height = window.innerHeight
+  if (!canvas) return
+
+  ctx = canvas.getContext('2d')
   isMobile = checkMobile()
 
-  preloadImages(() => {
+  // 🔥 FORCE SCROLL RESET (CRITICAL)
+  window.scrollTo(0, 0)
+
+  await nextTick()
+
+  setCanvasSize()
+
+  preloadImages(async () => {
+    await nextTick()
+
+    setCanvasSize()
+
+    // 🔥 FIRST PERFECT FRAME
     render(0)
+
+    // 🔥 START LOOP AFTER FIRST FRAME
     animate()
 
     window.addEventListener('resize', handleResize)
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleResize)
+    }
 
     // 🎯 SCROLL → FRAME
     gsap.to({}, {
@@ -153,77 +197,19 @@ onMounted(() => {
         start: "top top",
         end: "bottom bottom",
         scrub: 1,
+        invalidateOnRefresh: true,
         onUpdate: (self) => {
           targetFrame = self.progress * (frameCount - 1)
         }
       }
     })
 
-    // 🎬 TEXT ANIMATIONS
-    gsap.fromTo(".letter",
-      { opacity: 0, y: 100, rotateX: -90 },
-      {
-        opacity: 1,
-        y: 0,
-        rotateX: 0,
-        stagger: 0.06,
-        ease: "back.out(1.2)",
-        scrollTrigger: {
-          trigger: ".scroll-container",
-          start: "20% top",
-          end: "40% top",
-          scrub: 1,
-        }
-      }
-    )
-
-    gsap.fromTo(".subtitle",
-      { opacity: 0, y: 30 },
-      {
-        opacity: 1,
-        y: 0,
-        scrollTrigger: {
-          trigger: ".scroll-container",
-          start: "30% top",
-          end: "45% top",
-          scrub: 0.8,
-        }
-      }
-    )
-
-    gsap.to(".headline", {
-      opacity: 0,
-      y: -150,
-      scale: 0.95,
-      scrollTrigger: {
-        trigger: ".scroll-container",
-        start: "50% top",
-        end: "80% top",
-        scrub: 1.2,
-      }
-    })
-
-    gsap.to(".subtitle", {
-      opacity: 0,
-      y: -80,
-      scrollTrigger: {
-        trigger: ".scroll-container",
-        start: "60% top",
-        end: "85% top",
-        scrub: 1,
-      }
-    })
-
-    gsap.to(".scroll-indicator", {
-      opacity: 0,
-      y: -20,
-      scrollTrigger: {
-        trigger: ".scroll-container",
-        start: "60% top",
-        end: "80% top",
-        scrub: true,
-      }
-    })
+    // 🔥 FORCE FINAL SYNC AFTER GSAP INIT
+    setTimeout(() => {
+      setCanvasSize()
+      render(0)
+      
+    }, 100)
   })
 })
 </script>
@@ -265,7 +251,7 @@ canvas {
   position: sticky;
   top: 0;
   width: 100%;
-  height: 100vh;
+  height: 100dvh;
   display: block;
   object-fit: cover; /* Fallback for CSS */
 }
