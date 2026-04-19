@@ -62,7 +62,10 @@ onMounted(() => {
     </section>
 
     <!-- CONTENT COMPONENT -->
-    <ContentSection />
+    <!-- CONTENT COMPONENT -->
+    <div class="content-spacing">
+      <ContentSection />
+    </div>
 
   </div>
 </template>
@@ -70,6 +73,7 @@ onMounted(() => {
 <style scoped>
 .hero {
   position: relative;
+  padding-top: 53px;
 }
 
 /* OVERLAY */

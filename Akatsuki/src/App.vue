@@ -12,7 +12,7 @@ const transitionName = ref('slide-left')
 const pagesOrder = [
   '/zabava',
   '/kontakt',
-  '/o nama',
+  '/o-nama',
   '/mesto-okupljanja',
   '/home'
 ]

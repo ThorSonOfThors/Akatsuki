@@ -839,13 +839,19 @@ onBeforeUnmount(() => {
   position: relative;
   z-index: 2;
   margin: 60px 20px 40px;
+  max-width: calc(100% - 40px); /* Add this - ensures it doesn't exceed viewport */
   background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(22, 163, 74, 0.05));
   border-radius: 48px;
-  padding: 60px 40px;
+  padding: 60px 40px ; 
   text-align: center;
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(1px);
   border: 1px solid rgba(74, 222, 128, 0.2);
+  width: 100%;
 }
+
+
+
+
 
 .cta-content {
   max-width: 600px;

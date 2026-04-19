@@ -47,7 +47,7 @@ onUnmounted(() => {
     <div class="nav-container">
       <!-- Logo / Brand -->
       <router-link to="/home" class="logo" @click="closeMenu">
-        <span class="logo-text">Brand</span>
+        <span class="logo-text">Akatsuki</span>
         <span class="logo-dot"></span>
       </router-link>
 
@@ -525,6 +525,7 @@ onUnmounted(() => {
   font-weight: 700;
   background: linear-gradient(135deg, #ffffff, #4ade80);
   -webkit-background-clip: text;
+  background-clip: initial;
   -webkit-text-fill-color: transparent;
 }
 
