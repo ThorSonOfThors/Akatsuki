@@ -28,60 +28,49 @@ onMounted(() => {
     const orbs = document.querySelectorAll('.orb')
     const leaves = document.querySelectorAll('.floating-leaf')
     
-    // Set EXTREME initial states - HIDDEN and POSITIONED OFF-SCREEN
+    // Set clean initial states - gently hidden
     gsap.set(wrapper, {
       opacity: 0,
-      x: -200,
-      rotationY: -45,
-      scale: 0.3,
-      filter: 'blur(30px)'
+      y: 30,
+      scale: 0.95
     })
     
     gsap.set(title, {
       opacity: 0,
-      x: 300,
-      rotation: 15,
-      scale: 0.5,
-      filter: 'blur(20px)'
+      y: 20,
+      scale: 0.95
     })
     
     gsap.set(desc, {
       opacity: 0,
-      x: 350,
-      rotation: 10,
-      scale: 0.4,
-      filter: 'blur(20px)'
+      y: 20,
+      scale: 0.95
     })
     
     gsap.set(highlight, {
       opacity: 0,
-      scale: 0,
-      rotation: -10
+      y: 10
     })
     
     gsap.set(logo, {
       opacity: 0,
-      scale: 0,
-      y: -100,
-      rotation: -180,
-      filter: 'blur(40px)'
+      y: 30,
+      scale: 0.9
     })
     
     gsap.set(button, {
       opacity: 0,
-      y: 200,
-      scale: 0,
-      rotation: 10
+      y: 20,
+      scale: 0.95
     })
     
     gsap.set(line, {
       width: 0,
-      opacity: 0,
-      scaleX: 0
+      opacity: 0
     })
     
-    gsap.set(orbs, { opacity: 0, scale: 0 })
-    gsap.set(leaves, { opacity: 0, scale: 0 })
+    gsap.set(orbs, { opacity: 0 })
+    gsap.set(leaves, { opacity: 0 })
     
     // Remove any blur from section bottom
     gsap.set('.content-section', { 
@@ -90,172 +79,145 @@ onMounted(() => {
       paddingBottom: 0
     })
     
-    // ANIMATION FUNCTION - THE EXPLOSION
-    const triggerExplosion = () => {
+    // SMOOTH ANIMATION FUNCTION
+    const triggerAnimation = () => {
       // Reset any previous animations
       gsap.killTweensOf([wrapper, title, desc, highlight, logo, button, line, orbs, leaves])
       
-      // Create master timeline for coordinated explosion
+      // Create master timeline for smooth coordinated animation
       const master = gsap.timeline({
         onComplete: () => {
-          console.log('💥 EXPLOSION COMPLETE!')
+          console.log('✨ Animation complete')
         }
       })
       
-      // 1. CONTENT WRAPPER slides from LEFT with BLAST
+      // 1. CONTENT WRAPPER fades in
       master.to(wrapper, {
         opacity: 1,
-        x: 0,
-        rotationY: 0,
+        y: 0,
         scale: 1,
-        filter: 'blur(0px)',
         duration: 0.8,
-        ease: 'back.out(1.8)',
-        clearProps: 'filter'
+        ease: 'power3.out'
       }, 0)
       
-      // 2. TITLE flies from RIGHT with ROTATION
+      // 2. TITLE fades in
       master.to(title, {
         opacity: 1,
-        x: 0,
-        rotation: 0,
+        y: 0,
         scale: 1,
-        filter: 'blur(0px)',
-        duration: 0.7,
-        ease: 'elastic.out(1.2, 0.5)',
-        clearProps: 'filter'
+        duration: 0.6,
+        ease: 'power3.out'
       }, 0.2)
       
-      // 3. DESCRIPTION flies from RIGHT with STAGGER
+      // 3. DESCRIPTION fades in
       master.to(desc, {
         opacity: 1,
-        x: 0,
-        rotation: 0,
+        y: 0,
         scale: 1,
-        filter: 'blur(0px)',
-        duration: 0.7,
-        ease: 'elastic.out(1.1, 0.5)',
-        clearProps: 'filter'
+        duration: 0.6,
+        ease: 'power3.out'
       }, 0.3)
       
-      // 4. HIGHLIGHT POPS with BOUNCE
+      // 4. HIGHLIGHT fades in
       master.to(highlight, {
         opacity: 1,
-        scale: 1,
-        rotation: 0,
+        y: 0,
         duration: 0.5,
-        ease: 'back.out(2)',
-        clearProps: 'filter'
-      }, 0.5)
+        ease: 'power2.out'
+      }, 0.4)
       
-      // 5. LOGO DROPS from TOP with SPIN
+      // 5. LOGO fades in
       master.to(logo, {
         opacity: 1,
-        scale: 1,
         y: 0,
-        rotation: 0,
-        filter: 'blur(0px)',
-        duration: 0.9,
-        ease: 'bounce.out',
-        clearProps: 'filter'
-      }, 0.6)
+        scale: 1,
+        duration: 0.7,
+        ease: 'power3.out'
+      }, 0.5)
       
-      // 6. BUTTON RISES from BOTTOM
+      // 6. BUTTON fades in
       master.to(button, {
         opacity: 1,
         y: 0,
         scale: 1,
-        rotation: 0,
         duration: 0.6,
-        ease: 'elastic.out(1.3, 0.6)',
-        clearProps: 'filter'
-      }, 0.7)
+        ease: 'power3.out'
+      }, 0.6)
       
-      // 7. DECORATIVE LINE SLIDES IN
+      // 7. DECORATIVE LINE slides in
       master.to(line, {
         width: 60,
         opacity: 1,
-        scaleX: 1,
         duration: 0.5,
         ease: 'power2.out'
-      }, 0.8)
+      }, 0.7)
       
-      // 8. ORBS EXPLODE
+      // 8. ORBS fade in gently
       master.to(orbs, {
         opacity: 0.3,
-        scale: 1,
-        duration: 0.8,
-        stagger: 0.15,
-        ease: 'back.out(1.5)'
-      }, 0.3)
-      
-      // 9. LEAVES FLOAT IN
-      master.to(leaves, {
-        opacity: 0.15,
-        scale: 1,
-        duration: 0.6,
+        duration: 1,
         stagger: 0.1,
         ease: 'power2.out'
-      }, 0.4)
+      }, 0.2)
       
-      // 10. EXTRA SHAKE EFFECT on wrapper
-      master.to(wrapper, {
-        scale: 1.02,
-        duration: 0.1,
-        yoyo: true,
-        repeat: 2,
-        ease: 'power1.inOut'
-      }, 0.5)
+      // 9. LEAVES fade in gently
+      master.to(leaves, {
+        opacity: 0.15,
+        duration: 0.8,
+        stagger: 0.08,
+        ease: 'power2.out'
+      }, 0.3)
     }
     
     // INTERSECTION OBSERVER - triggers when section becomes visible
     observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
-          console.log('🔥 SECTION DETECTED! Triggering explosion...')
-          triggerExplosion()
+          console.log('🌿 Section detected! Animating...')
+          triggerAnimation()
         }
       })
     }, { 
-      threshold: 0.15,
-      rootMargin: '0px 0px -50px 0px'
+      threshold: 0.2,
+      rootMargin: '0px 0px -100px 0px'
     })
     
     observer.observe(section)
     
-    // SCROLLTRIGGER for continuous effects (parallax)
+    // SCROLLTRIGGER for smooth parallax effects
     scrollTrigger = ScrollTrigger.create({
       trigger: ".content-section",
       start: "top 85%",
       end: "bottom 15%",
       onEnter: () => {
         console.log('🎯 ScrollTrigger entered')
-        triggerExplosion()
+        triggerAnimation()
       },
       onLeave: () => {
-        console.log('👋 Left section - resetting for next time')
-        // Reset everything for next time
+        console.log('👋 Left section - resetting')
+        // Gentle reset for next time
         gsap.set([wrapper, title, desc, highlight, logo, button, line], {
           opacity: 0,
           clearProps: 'all'
         })
-        gsap.set(wrapper, { x: -200, rotationY: -45, scale: 0.3, filter: 'blur(30px)' })
-        gsap.set(title, { x: 300, rotation: 15, scale: 0.5, filter: 'blur(20px)' })
-        gsap.set(desc, { x: 350, rotation: 10, scale: 0.4, filter: 'blur(20px)' })
-        gsap.set(logo, { scale: 0, y: -100, rotation: -180, filter: 'blur(40px)' })
-        gsap.set(button, { y: 200, scale: 0, rotation: 10 })
-        gsap.set(line, { width: 0, scaleX: 0 })
-        gsap.set(orbs, { opacity: 0, scale: 0 })
-        gsap.set(leaves, { opacity: 0, scale: 0 })
+        gsap.set(wrapper, { y: 30, scale: 0.95 })
+        gsap.set(title, { y: 20, scale: 0.95 })
+        gsap.set(desc, { y: 20, scale: 0.95 })
+        gsap.set(highlight, { y: 10 })
+        gsap.set(logo, { y: 30, scale: 0.9 })
+        gsap.set(button, { y: 20, scale: 0.95 })
+        gsap.set(line, { width: 0 })
+        gsap.set(orbs, { opacity: 0 })
+        gsap.set(leaves, { opacity: 0 })
       },
       onEnterBack: () => {
-        console.log('🔄 Scrolled back up - RE-EXPLODING!')
-        triggerExplosion()
+        console.log('🔄 Scrolled back up - re-animating')
+        triggerAnimation()
       },
       toggleActions: "play none none reverse"
     })
     
-    // Parallax effects while scrolling
+    // Gentle parallax effects while scrolling
     scrollTriggerParallax = ScrollTrigger.create({
       trigger: ".content-section",
       start: "top bottom",
@@ -263,14 +225,13 @@ onMounted(() => {
       onUpdate: (self) => {
         const progress = self.progress
         if (progress > 0 && progress < 1) {
-          gsap.to('.orb-1', { x: progress * 80, y: progress * -50, duration: 0.1, overwrite: true })
-          gsap.to('.orb-2', { x: progress * -60, y: progress * 60, duration: 0.1, overwrite: true })
-          gsap.to('.orb-3', { x: progress * 40, y: progress * -30, duration: 0.1, overwrite: true })
-          gsap.to('.leaf-1', { x: progress * 50, y: progress * -40, duration: 0.1, overwrite: true })
-          gsap.to('.leaf-2', { x: progress * -45, y: progress * 35, duration: 0.1, overwrite: true })
-          gsap.to('.leaf-3', { x: progress * 30, y: progress * -25, duration: 0.1, overwrite: true })
-          gsap.to('.leaf-4', { x: progress * -35, y: progress * 30, duration: 0.1, overwrite: true })
-          gsap.to('.leaf-5', { x: progress * 25, y: progress * -20, duration: 0.1, overwrite: true })
+          // Smooth, gentle movement
+          gsap.to('.orb-1', { x: progress * 30, y: progress * -20, duration: 0.1, overwrite: true, ease: 'power1.out' })
+          gsap.to('.orb-2', { x: progress * -25, y: progress * 25, duration: 0.1, overwrite: true, ease: 'power1.out' })
+          gsap.to('.orb-3', { x: progress * 15, y: progress * -15, duration: 0.1, overwrite: true, ease: 'power1.out' })
+          gsap.to('.leaf-1', { x: progress * 20, y: progress * -15, duration: 0.1, overwrite: true, ease: 'power1.out' })
+          gsap.to('.leaf-2', { x: progress * -18, y: progress * 18, duration: 0.1, overwrite: true, ease: 'power1.out' })
+          gsap.to('.leaf-3', { x: progress * 12, y: progress * -12, duration: 0.1, overwrite: true, ease: 'power1.out' })
         }
       }
     })
@@ -359,14 +320,23 @@ onBeforeUnmount(() => {
   justify-content: center;
   background: linear-gradient(135deg, #0A1A0F 0%, #1A3A2A 50%, #0D2818 100%);
   color: white;
-  overflow-x: hidden;
-  overflow-y: visible;
+  overflow: hidden !important; /* Changed from overflow-x/overflow-y */
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', system-ui, sans-serif;
   margin: 0;
   padding: 0;
   /* Remove any blur at bottom */
   filter: none !important;
   backdrop-filter: none !important;
+  /* Hide scrollbar completely */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+/* Hide scrollbar for Webkit browsers (Chrome, Safari, Opera) */
+.content-section::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  background: transparent;
 }
 
 /* Ensure no blur at bottom of section */
